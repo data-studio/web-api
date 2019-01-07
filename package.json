@@ -1,0 +1,35 @@
+{
+  "name": "ds-svc-final",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "./bin/ds-api --port=3000",
+    "test": "jasmine"
+  },
+  "bin": {
+    "ds-api": "ds-api"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "body-parser": "^1.17.2",
+    "bookshelf": "0.14.2",
+    "express": "^4.15.3",
+    "knex": "0.13.0",
+    "mysql": "2.16.0",
+    "node-uuid": "^1.4.8",
+    "uuid": "3.3.2",
+    "uuid-regexp": "^0.3.0"
+  },
+  "devDependencies": {
+    "colors": "^1.1.2",
+    "gulp": "^3.9.1",
+    "gulp-exec": "^2.1.3",
+    "gulp-filter": "^5.0.0",
+    "gulp-watch": "^4.3.11",
+    "jasmine": "^2.6.0",
+    "jasmine-spec-reporter": "^4.1.1"
+  }
+}

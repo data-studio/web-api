@@ -1,0 +1,24 @@
+language: node_js
+node_js:
+  - "7"
+
+env:
+  - DS_DB_HOST=localhost DS_DB_USER=travis DS_DB_PASS= DS_DB_NAME=datastudio DS_SERVER_NAME=localhost DS_SERVER_PROTOCOL=http
+
+services:
+  - mysql
+
+before_install:
+  - mysql -e 'CREATE DATABASE datastudio;'
+
+before_script:
+  - export DISPLAY=:99.0
+  - sh -e /etc/init.d/xvfb start
+  - cat src/sql/*.sql | mysql -h localhost -u travis datastudio
+  - cat src/sql/data/*.sql | mysql -h localhost -u travis datastudio
+
+script:
+  - npm test
+
+git:
+  depth: 10

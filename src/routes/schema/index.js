@@ -136,6 +136,7 @@ module.exports = function (dataStudio) {
           Id: newSchemaThingId,
           SchemaId: schemaId,
           Key: req.body.Key || "Name",
+          Type: '',
           Created: Math.floor(Date.now()/1000),
         });
         break;

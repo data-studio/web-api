@@ -64,11 +64,9 @@ describe("APP_API REST API", function () {
         Name: "My Test App",
       };
       $testClient.$post(authorization, `/apps`, appData, function (err, res) {
-        $testClient.$get(authorization, res.headers.location, function (err, res) {
-          app = res.d;
-          appId = app.Id;
-          done();
-        });
+        app = res.d;
+        appId = app.Id;
+        done();
       });
     });
 
@@ -81,17 +79,35 @@ describe("APP_API REST API", function () {
         });
       });
 
-      it("RETURNS `HTTP/1.1 303 See Other` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
+      it("RETURNS `HTTP/1.1 200 OK` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
         $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
-          expect(res.statusCode).toBe(303);
-          expect(res.headers.location).toMatch(jasmine.idUrlRegexp("app", "api"));
+          expect(res.statusCode).toBe(200);
           done();
         });
       });
 
-      it("CREATES AN APP API", function (done) {
+      it("RETURNS AN OBJECT IN THE RESPONSE BODY FOR A SUCCESSFUL REQUEST", function (done) {
         $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
-          $testClient.$get(authorization, res.headers.location, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.any(Object));
+          done();
+        });
+      });
+
+      it("RETURNS AN `Id` PROPERTY IN THE RESPONSE BODY OBJECT FOR A SUCCESSFUL REQUEST", function (done) {
+        $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.objectContaining({
+            "Id": jasmine.any(String),
+          }));
+          done();
+        });
+      });
+
+      it("CREATES AN APP API REACHABLE USING THE `Id` PROPERTY IN THE RESPONSE BODY", function (done) {
+        $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
+          let apiId = res.d.Id;
+          $testClient.$get(authorization, `/api/${apiId}`, function (err, res) {
             expect(res.statusCode).toBe(200);
             done();
           });
@@ -100,13 +116,13 @@ describe("APP_API REST API", function () {
 
       it("ADDS THE API TO THE APPS LIST OF APIS", function (done) {
         $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
-          let apiId = res.headers.location.split(/\//g).pop();
+          let apiId = res.d.Id;
           $testClient.$get(authorization, `/app/${appId}`, function (err, res) {
             expect(res.statusCode).toBe(200);
             expect(res.d).toEqual(jasmine.objectContaining({
               "Apis": jasmine.arrayContaining([
                 jasmine.objectContaining({
-                  "Id": apiId
+                  "Id": apiId,
                 }),
               ]),
             }));
@@ -151,20 +167,12 @@ describe("APP_API REST API", function () {
         Path: "/test_route/:test_route_id"
       };
       $testClient.$post(authorization, `/apps`, appData, function (err, res) {
-        $testClient.$get(authorization, res.headers.location, function (err, res) {
-          app = res.d;
-          appId = app.Id;
-          $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
-            $testClient.$get(authorization, res.headers.location, function (err, res) {
-              api = res.d;
-              apiId = app.Id;
-              $testClient.$post(authorization, `/api/${apiId}/routes`, apiRouteData, function (err, res) {
-                apiOperationData.RouteId = res.headers.location.split(/\//g).pop();
-                $testClient.$post(authorization, `/api/${apiId}/operations`, apiOperationData, function (err, res) {
-                  done();
-                });
-              });
-            });
+        api = res.d;
+        apiId = api.Id;
+        $testClient.$post(authorization, `/api/${apiId}/routes`, apiRouteData, function (err, res) {
+          apiOperationData.RouteId = res.headers.location.split(/\//g).pop();
+          $testClient.$post(authorization, `/api/${apiId}/operations`, apiOperationData, function (err, res) {
+            done();
           });
         });
       });

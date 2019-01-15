@@ -46,13 +46,10 @@
       };
       this.$post(null, "/auth/attempts", d, (err, res) => {
         if (err) return cb(err);
-        this.$get(null, res.headers.location, (err, res) => {
-          if (err) return cb(err);
-          cb(undefined, {
-            TokenKey: res.d.Token.Key,
-            UserId: res.d.Token.UserId,
-            Login: res.d.Login,
-          });
+        cb(undefined, {
+          TokenKey: res.d.Token.Key,
+          UserId: res.d.Token.UserId,
+          Login: res.d.Login,
         });
       });
       return this;

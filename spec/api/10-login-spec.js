@@ -73,13 +73,13 @@ describe("AUTHENTICATION REST API", function () {
       });
     });
 
-    it("RETURNS `HTTP/1.1 303 See Other` WHEN THE ATTEMPT IS SUCCESSFUL", function (done) {
+    it("RETURNS `HTTP/1.1 200 OK` WHEN THE ATTEMPT IS SUCCESSFUL", function (done) {
       let d = {
         Login: validLogin,
         Password: validPassword,
       };
       $testClient.$post(null, "/auth/attempts", d, function (err, res) {
-        expect(res.statusCode).toBe(303);
+        expect(res.statusCode).toBe(200);
         done();
       });
     });
@@ -91,21 +91,16 @@ describe("AUTHENTICATION REST API", function () {
       };
       $testClient.$post(null, "/auth/attempts", d, function (err, res) {
         if (err) return done(err);
-        expect(res.statusCode).toBe(303);
-        expect(res.headers.location).toBeDefined();
-        $testClient.$get(null, res.headers.location, function (err, res) {
-          if (err) return done(err);
-          expect(res.statusCode).toBe(200);
-          expect(res.d).toEqual(jasmine.objectContaining({
-            Token: jasmine.objectContaining({
-              Id: jasmine.any(String),
-              Key: jasmine.any(String),
-              Created: jasmine.any(Number),
-              Expiry: jasmine.any(Number),
-            }),
-          }));
-          done();
-        });
+        expect(res.statusCode).toBe(200);
+        expect(res.d).toEqual(jasmine.objectContaining({
+          Token: jasmine.objectContaining({
+            Id: jasmine.any(String),
+            Key: jasmine.any(String),
+            Created: jasmine.any(Number),
+            Expiry: jasmine.any(Number),
+          }),
+        }));
+        done();
       });
     });
 

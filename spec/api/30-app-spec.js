@@ -15,6 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+
 describe("APP REST API", function () {
 
   let api;
@@ -67,21 +68,18 @@ describe("APP REST API", function () {
         });
       });
 
-      it("RETURNS `HTTP/1.1 303 See Other` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
+      it("RETURNS `HTTP/1.1 200 OK` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
         $testClient.$post(authorization, `/apps`, d, function (err, res) {
-          expect(res.statusCode).toBe(303);
-          expect(res.headers.location).toMatch(jasmine.idUrlRegexp("app"));
+          expect(res.statusCode).toBe(200);
           done();
         });
       });
 
-      it("CREATES A RESOURCE REACHABLE VIA THE URI IN THE `Location` HEADER", function (done) {
+      it("RETURNS AN OBJECT IN THE RESPONSE BODY FOR A SUCCESSFUL REQUEST", function (done) {
         $testClient.$post(authorization, `/apps`, d, function (err, res) {
-          $testClient.$get(authorization, `${res.headers.location}`, function (err, res) {
-            expect(res.statusCode).toBe(200);
-            expect(res.d).toEqual(jasmine.any(Object));
-            done();
-          });
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.any(Object));
+          done();
         });
       });
 

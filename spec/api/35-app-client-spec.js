@@ -64,11 +64,9 @@ describe("APP_CLIENT REST API", function () {
         Name: "My Test App",
       };
       $testClient.$post(authorization, `/apps`, appData, function (err, res) {
-        $testClient.$get(authorization, res.headers.location, function (err, res) {
-          app = res.d;
-          appId = app.Id;
-          done();
-        });
+        app = res.d;
+        appId = app.Id;
+        done();
       });
     });
 
@@ -81,32 +79,50 @@ describe("APP_CLIENT REST API", function () {
         });
       });
 
-      it("RETURNS `HTTP/1.1 303 See Other` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
+      it("RETURNS `HTTP/1.1 200 OK` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
         $testClient.$post(authorization, `/app/${appId}/clients`, clientData, function (err, res) {
-          expect(res.statusCode).toBe(303);
-          expect(res.headers.location).toMatch(jasmine.idUrlRegexp("app", "client"));
+          expect(res.statusCode).toBe(200);
           done();
         });
       });
 
-      it("CREATES AN APP CLIENT", function (done) {
+      it("RETURNS AN OBJECT IN THE RESPONSE BODY FOR A SUCCESSFUL REQUEST", function (done) {
         $testClient.$post(authorization, `/app/${appId}/clients`, clientData, function (err, res) {
-          $testClient.$get(authorization, res.headers.location, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.any(Object));
+          done();
+        });
+      });
+
+      it("RETURNS AN `Id` PROPERTY IN THE RESPONSE BODY OBJECT FOR A SUCCESSFUL REQUEST", function (done) {
+        $testClient.$post(authorization, `/app/${appId}/clients`, clientData, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.objectContaining({
+            "Id": jasmine.any(String),
+          }));
+          done();
+        });
+      });
+
+      it("CREATES AN APP CLIENT REACHABLE USING THE `Id` PROPERTY IN THE RESPONSE BODY", function (done) {
+        $testClient.$post(authorization, `/app/${appId}/clients`, clientData, function (err, res) {
+          let clientId = res.d.Id;
+          $testClient.$get(authorization, `/client/${clientId}`, function (err, res) {
             expect(res.statusCode).toBe(200);
             done();
           });
         });
       });
 
-      it("ADDS THE CLIENT TO THE APPS LIST OF APIS", function (done) {
+      it("ADDS THE CLIENT TO THE APPS LIST OF CLIENTS", function (done) {
         $testClient.$post(authorization, `/app/${appId}/clients`, clientData, function (err, res) {
-          let clientId = res.headers.location.split(/\//g).pop();
+          let clientId = res.d.Id;
           $testClient.$get(authorization, `/app/${appId}`, function (err, res) {
             expect(res.statusCode).toBe(200);
             expect(res.d).toEqual(jasmine.objectContaining({
               "Clients": jasmine.arrayContaining([
                 jasmine.objectContaining({
-                  "Id": clientId
+                  "Id": clientId,
                 }),
               ]),
             }));

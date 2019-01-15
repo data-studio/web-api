@@ -48,7 +48,7 @@ describe("SCHEMA_PROPERTY REST API", function () {
     api.server.close(done);
   });
 
-  describe("/schema/:schemaId/properties", function () {
+  describe("[createSchemaProperty] POST /schema/:schemaId/properties", function () {
 
     let app;
     let schema;
@@ -70,21 +70,17 @@ describe("SCHEMA_PROPERTY REST API", function () {
         Key: "MyProp",
       };
       $testClient.$post(authorization, `/apps`, appData, function (err, res) {
-        $testClient.$get(authorization, res.headers.location, function (err, res) {
-          app = res.d;
-          appId = app.Id;
-          $testClient.$post(authorization, `/app/${appId}/schemas`, schemaData, function (err, res) {
-            $testClient.$get(authorization, res.headers.location, function (err, res) {
-              schema = res.d;
-              schemaId = schema.Id;
-              done();
-            });
-          });
+        app = res.d;
+        appId = app.Id;
+        $testClient.$post(authorization, `/app/${appId}/schemas`, schemaData, function (err, res) {
+          schema = res.d;
+          schemaId = schema.Id;
+          done();
         });
       });
     });
 
-    describe("createSchemaProperty <POST> with valid parameters", function () {
+    describe("with valid parameters", function () {
 
       it("RETURNS `HTTP/1.1 403 Forbidden` WHEN `Authorization` HEADER IS NOT PROVIDED", function (done) {
         $testClient.$post(null, `/schema/${schemaId}/properties`, propertyData, function (err, res) {
@@ -93,17 +89,35 @@ describe("SCHEMA_PROPERTY REST API", function () {
         });
       });
 
-      it("RETURNS `HTTP/1.1 303 See Other` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
+      it("RETURNS `HTTP/1.1 200 OK` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
         $testClient.$post(authorization, `/schema/${schemaId}/properties`, propertyData, function (err, res) {
-          expect(res.statusCode).toBe(303);
-          expect(res.headers.location).toMatch(jasmine.idUrlRegexp("schema", "property"));
+          expect(res.statusCode).toBe(200);
           done();
         });
       });
 
-      it("CREATES AN API PROPERTY", function (done) {
+      it("RETURNS AN OBJECT IN THE RESPONSE BODY FOR A SUCCESSFUL REQUEST", function (done) {
         $testClient.$post(authorization, `/schema/${schemaId}/properties`, propertyData, function (err, res) {
-          $testClient.$get(authorization, res.headers.location, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.any(Object));
+          done();
+        });
+      });
+
+      it("RETURNS AN `Id` PROPERTY IN THE RESPONSE BODY OBJECT FOR A SUCCESSFUL REQUEST", function (done) {
+        $testClient.$post(authorization, `/schema/${schemaId}/properties`, propertyData, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.objectContaining({
+            "Id": jasmine.any(String),
+          }));
+          done();
+        });
+      });
+
+      it("CREATES A SCHEMA PROPERTY REACHABLE USING THE `Id` PROPERTY IN THE RESPONSE BODY", function (done) {
+        $testClient.$post(authorization, `/schema/${schemaId}/properties`, propertyData, function (err, res) {
+          let propertyId = res.d.Id;
+          $testClient.$get(authorization, `/schema/${schemaId}/property/${propertyId}`, function (err, res) {
             expect(res.statusCode).toBe(200);
             done();
           });
@@ -112,12 +126,12 @@ describe("SCHEMA_PROPERTY REST API", function () {
 
       it("ADDS THE PROPERTY TO THE SCHEMAS LIST OF PROPERTIES", function (done) {
         $testClient.$post(authorization, `/schema/${schemaId}/properties`, propertyData, function (err, res) {
-          let propId = res.headers.location.split(/\//g).pop();
+          let propertyId = res.d.Id;
           $testClient.$get(authorization, `/schema/${schemaId}/properties`, function (err, res) {
             expect(res.statusCode).toBe(200);
             expect(res.d).toEqual(jasmine.arrayContaining([
               jasmine.objectContaining({
-                "Id": propId
+                "Id": propertyId,
               }),
             ]));
             done();

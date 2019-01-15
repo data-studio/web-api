@@ -90,21 +90,17 @@ describe("API_OPERATION REST API", function () {
         Name: "myOperation",
       };
       $testClient.$post(authorization, `/apps`, appData, function (err, res) {
-        $testClient.$get(authorization, res.headers.location, function (err, res) {
-          app = res.d;
-          appId = app.Id;
-          $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
-            $testClient.$get(authorization, res.headers.location, function (err, res) {
-              api = res.d;
-              apiId = api.Id;
-              done();
-            });
-          });
+        app = res.d;
+        appId = app.Id;
+        $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
+          api = res.d;
+          apiId = api.Id;
+          done();
         });
       });
     });
 
-    describe("valid parameters", function () {
+    describe("with valid parameters", function () {
 
       it("RETURNS `HTTP/1.1 403 Forbidden` WHEN `Authorization` HEADER IS NOT PROVIDED", function (done) {
         $testClient.$post(null, `/api/${apiId}/operations`, opData, function (err, res) {
@@ -113,35 +109,49 @@ describe("API_OPERATION REST API", function () {
         });
       });
 
-      it("RETURNS `HTTP/1.1 303 See Other` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
+      it("RETURNS `HTTP/1.1 200 OK` WHEN `Authorization` HEADER IS PROVIDED", function (done) {
         $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
-          expect(res.statusCode).toBe(303);
-          expect(res.headers.location).toMatch(jasmine.idUrlRegexp("api", "operation"));
+          expect(res.statusCode).toBe(200);
           done();
         });
       });
 
-      it("CREATES AN API Operation", function (done) {
+      it("RETURNS AN OBJECT IN THE RESPONSE BODY FOR A SUCCESSFUL REQUEST", function (done) {
         $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
-          setTimeout(function () {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.any(Object));
+          done();
+        });
+      });
 
-            $testClient.$get(authorization, res.headers.location, function (err, res) {
-              expect(res.statusCode).toBe(200);
-              done();
-            });
+      it("RETURNS AN `Id` PROPERTY IN THE RESPONSE BODY OBJECT FOR A SUCCESSFUL REQUEST", function (done) {
+        $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
+          expect(res.statusCode).toBe(200);
+          expect(res.d).toEqual(jasmine.objectContaining({
+            "Id": jasmine.any(String),
+          }));
+          done();
+        });
+      });
 
-          }, 500);
+      it("CREATES AN API OPERATION REACHABLE USING THE `Id` PROPERTY IN THE RESPONSE BODY", function (done) {
+        $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
+          let operationId = res.d.Id;
+          $testClient.$get(authorization, `/api/${apiId}/operation/${operationId}`, function (err, res) {
+            expect(res.statusCode).toBe(200);
+            done();
+          });
         });
       });
 
       it("ADDS THE OPERATION TO THE APIS LIST OF OPERATIONS", function (done) {
         $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
-          let opId = res.headers.location.split(/\//g).pop();
+          let operationId = res.d.Id;
           $testClient.$get(authorization, `/api/${apiId}/operations`, function (err, res) {
             expect(res.statusCode).toBe(200);
             expect(res.d).toEqual(jasmine.arrayContaining([
               jasmine.objectContaining({
-                "Id": opId
+                "Id": operationId,
               }),
             ]));
             done();
@@ -162,9 +172,9 @@ describe("API_OPERATION REST API", function () {
     let appId;
     let apiId;
 
-    let opData;
     let opId;
     let opUri;
+    let opData;
 
     let apiResponse;
 
@@ -179,23 +189,17 @@ describe("API_OPERATION REST API", function () {
         Name: "myOperation",
       };
       $testClient.$post(authorization, `/apps`, appData, function (err, res) {
-        $testClient.$get(authorization, res.headers.location, function (err, res) {
-          app = res.d;
-          appId = app.Id;
-          $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
-            $testClient.$get(authorization, res.headers.location, function (err, res) {
-              api = res.d;
-              apiId = api.Id;
-              $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
-                opId = res.headers.location.split(/\//g).pop();
-                opUri = res.headers.location;
-                $testClient.$get(authorization, opUri, function (err, res) {
-                  if (err) done(err);
-                  apiResponse = res;
-                  done();
-                });
-              });
-            });
+        app = res.d;
+        appId = app.Id;
+        $testClient.$post(authorization, `/app/${appId}/apis`, apiData, function (err, res) {
+          api = res.d;
+          apiId = api.Id;
+          $testClient.$post(authorization, `/api/${apiId}/operations`, opData, function (err, res) {
+            if (err) done(err);
+            apiResponse = res;
+            opId = apiResponse.d.Id;
+            opUri = `/operation/${opId}`;
+            done();
           });
         });
       });

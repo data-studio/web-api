@@ -4,11 +4,17 @@ Web API for Data Studio by Eviratec
 
 ## Install
 
-`$ npm install`
+1. Install dependencies: `$ npm install`
+2. Create a new MySQL database
+3. Import SQL tables from files in `/src/sql`
+4. Define DB connection environment variables: `DS_DB_HOST`, `DS_DB_USER`, `DS_DB_PASS`, and `DS_DB_NAME` (e.g. `$ export DS_DB_HOST=localhost`)
+5. Test installation: `$ npm test`
+6. Start server `$ ./bin/ds-api`
 
 ## Test
 
-`$ npm test`
+1. Follow installation instructions above
+2. Run tests with `$ npm test`
 
 ## License
 
